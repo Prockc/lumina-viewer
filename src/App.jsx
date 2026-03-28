@@ -27,7 +27,7 @@ export default function App() {
     containerRef.current.appendChild(renderer.domElement);
     camera.position.set(0, 0, 5);
 
-    window.LCC.LCCRender.load({ scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: targetAsset }, targetAsset);
+    window.LCC.LCCRender.load({ scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, appKey: "LuminaSpatial" }, targetAsset, () => console.log("LCC Success"), (p) => console.log("LCC Progress:", p), (err) => console.error("LCC Error:", err));
     setTimeout(() => setIsLoading(false), 3000);
 
     const joystickManager = nipplejs.create({
