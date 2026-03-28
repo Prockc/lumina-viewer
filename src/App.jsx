@@ -19,12 +19,17 @@ const s3BucketUrl = 'https://s3.us-east-1.amazonaws.com/tours.luminaspatial.net/
     }
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 
     renderer.setSize(window.innerWidth, window.innerHeight);
     containerRef.current.appendChild(renderer.domElement);
-    camera.position.set(0, 0, 5);
+    camera.position.set(0, 100, 200);
+    camera.lookAt(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    scene.add(dirLight);
 
     window.LCC.LCCRender.load({ scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: targetAsset }, targetAsset);
     setTimeout(() => setIsLoading(false), 10000);
