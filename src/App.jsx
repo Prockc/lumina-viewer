@@ -26,21 +26,15 @@ const s3BucketUrl = 'https://s3.us-east-1.amazonaws.com/tours.luminaspatial.net/
     containerRef.current.appendChild(renderer.domElement);
     camera.position.set(0, 0, 5);
 
-    const absoluteUrl = new URL(targetAsset, window.location.href).href;
     window.LCC.LCCRender.load(
-      { scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: absoluteUrl },
-      absoluteUrl,
-      (res) => {
-        console.log("🟢 LCC Success:", res);
-        setIsLoading(false);
-      },
-      (res) => {
-        console.log("🔵 LCC Progress:", res);
-      },
-      (err) => {
-        console.error("🔴 LCC Error:", err);
-      }
-    );
+      { scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: targetAsset },
+      targetAsset
+    ).then((res) => {
+      console.log("🟢 LCC Success:", res);
+      setIsLoading(false);
+    }).catch((err) => {
+      console.error("🔴 LCC Error:", err);
+    });
 
     const joystickManager = nipplejs.create({
       zone: joystickRef.current,
