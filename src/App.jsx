@@ -39,9 +39,11 @@ export default function App() {
     let moveVector = new THREE.Vector3(0, 0, 0);
 
     joystickManager.on('move', (evt, data) => {
-      const angle = data.angle.radian;
-      const force = data.force;
-      moveVector.set(Math.cos(angle) * force, 0, -Math.sin(angle) * force);
+      if (data && data.angle) {
+        const angle = data.angle.radian;
+        const force = data.force;
+        moveVector.set(Math.cos(angle) * force, 0, -Math.sin(angle) * force);
+      }
     });
 
     joystickManager.on('end', () => {
