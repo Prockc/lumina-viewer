@@ -7,6 +7,7 @@ export default function App() {
   const containerRef = useRef(null);
   const joystickRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -28,8 +29,13 @@ export default function App() {
     camera.position.set(0, 0, 5);
 
     const absoluteUrl = new URL(targetAsset, window.location.href).href;
-    window.LCC.LCCRender.load({ scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: absoluteUrl }, absoluteUrl);
-    setTimeout(() => setIsLoading(false), 3000);
+    window.LCC.LCCRender.load(
+      { scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: absoluteUrl },
+      absoluteUrl,
+      () => setIsLoading(false),
+      (p) => console.log("LCC Progress:", p),
+      (err) => { console.error("LCC Error:", err); setLoadError(String(err)); }
+    );
 
     const joystickManager = nipplejs.create({
       zone: joystickRef.current,
@@ -83,7 +89,18 @@ export default function App() {
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       <div ref={joystickRef} style={{ position: 'absolute', bottom: 0, left: 0, width: '150px', height: '150px', zIndex: 999 }} />
-      {isLoading && <div id="custom-loader" className="lumina-loader">Loading Spatial Data...</div>}
+      {isLoading && (
+        <div id="custom-loader" className="lumina-loader">
+          {loadError ? (
+            <div className="lumina-error">{loadError}</div>
+          ) : (
+            <>
+              <div className="lumina-spinner" />
+              <div>Loading Spatial Data...</div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
