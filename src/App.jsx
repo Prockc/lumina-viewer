@@ -29,7 +29,7 @@ export default function App() {
 
     const absoluteUrl = new URL(targetAsset, window.location.href).href;
     window.LCC.LCCRender.load(
-      { scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: absoluteUrl, appKey: "eyJrIjoidiJ9" },
+      { scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: absoluteUrl },
       absoluteUrl,
       (res) => {
         console.log("🟢 LCC Success:", res);
