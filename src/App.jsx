@@ -23,7 +23,7 @@ const s3BucketUrl = 'https://s3.us-east-1.amazonaws.com/tours.luminaspatial.net/
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 
     renderer.setSize(window.innerWidth, window.innerHeight);
-    containerRef.current.appendChild(renderer.domElement);
+    if (containerRef.current) { containerRef.current.appendChild(renderer.domElement); }
     camera.position.set(0, 100, 200);
     camera.lookAt(0, 0, 0);
 
@@ -31,7 +31,8 @@ const s3BucketUrl = 'https://s3.us-east-1.amazonaws.com/tours.luminaspatial.net/
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
     scene.add(dirLight);
 
-    window.LCC.LCCRender.load({ scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: targetAsset }, targetAsset);
+    console.log("🚀 LCC Target URL:", targetAsset);
+    window.LCC.LCCRender.load({ scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: targetAsset });
     setTimeout(() => setIsLoading(false), 10000);
 
     const joystickManager = nipplejs.create({
