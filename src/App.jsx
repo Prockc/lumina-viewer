@@ -11,8 +11,7 @@ export default function App() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const modelName = urlParams.get('model');
-    const s3BucketUrl = 'https://YOUR_BUCKET_NAME.s3.us-east-1.amazonaws.com/';
-    const targetAsset = modelName ? `${s3BucketUrl}${modelName}` : null;
+const s3BucketUrl = 'https://s3.us-east-1.amazonaws.com/tours.luminaspatial.net/';    const targetAsset = modelName ? `${s3BucketUrl}${modelName}` : null;
 
     if (!targetAsset) {
       console.error("No model specified. Use ?model=filename.lcc in URL.");
