@@ -27,7 +27,8 @@ export default function App() {
     containerRef.current.appendChild(renderer.domElement);
     camera.position.set(0, 0, 5);
 
-    window.LCC.LCCRender.load({ scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, appKey: "eyJrIjoidiJ9", url: targetAsset }, targetAsset);
+    const absoluteUrl = new URL(targetAsset, window.location.href).href;
+    window.LCC.LCCRender.load({ scene, camera, renderer, canvas: renderer.domElement, renderLib: THREE, url: absoluteUrl }, absoluteUrl);
     setTimeout(() => setIsLoading(false), 3000);
 
     const joystickManager = nipplejs.create({
