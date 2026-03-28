@@ -1,0 +1,4 @@
+body, html { margin: 0; padding: 0; overflow: hidden; background-color: #000; }
+[class*="xgrids"], [id*="xgrids"] { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+canvas + div { display: none !important; }
+.lumina-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-family: sans-serif; font-weight: bold; pointer-events: none; z-index: 100; }
