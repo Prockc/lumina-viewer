@@ -26,9 +26,7 @@ export default function App() {
     containerRef.current.appendChild(renderer.domElement);
     camera.position.set(0, 0, 5);
 
-    const lccEngine = new window.LCC.LCCRender(renderer, scene, camera);
-
-    lccEngine.load(targetAsset).then(() => {
+    window.LCC.LCCRender.load(renderer, scene, camera, targetAsset).then(() => {
       document.querySelectorAll('[class*="xgrids"], [id*="xgrids"]').forEach(el => el.remove());
     });
 
@@ -58,7 +56,7 @@ export default function App() {
         camera.translateX(moveVector.x * 0.05);
         camera.translateZ(moveVector.z * 0.05);
       }
-      lccEngine.update();
+      window.LCC.LCCRender.update();
       renderer.render(scene, camera);
     };
     animate();
