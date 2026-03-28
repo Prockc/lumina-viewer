@@ -26,7 +26,7 @@ export default function App() {
     containerRef.current.appendChild(renderer.domElement);
     camera.position.set(0, 0, 5);
 
-    window.LCC.LCCRender.load(renderer, scene, camera, targetAsset).then(() => {
+    window.LCC.LCCRender.load({ scene, camera, renderer }, targetAsset).then(() => {
       document.querySelectorAll('[class*="xgrids"], [id*="xgrids"]').forEach(el => el.remove());
     });
 
