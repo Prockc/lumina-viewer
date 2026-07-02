@@ -3,10 +3,11 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        - npm install
     build:
       commands:
         - npm run build
+        - cp logo.png dist/
   artifacts:
     baseDirectory: dist
     files:

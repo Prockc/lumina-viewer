@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/Lumina Real Estate/Liberty Church Rd/1021 Liberty Church Zip/**)",
+      "PowerShell(cmd /c \"dir /a c:\\\\Users\\\\paul\\\\Desktop\\\\lumina-spatial-viewer\\\\static\\\\lib\\\\draco\")",
+      "PowerShell(cmd /c \"dir /a c:\\\\Users\\\\paul\\\\Desktop\\\\lumina-spatial-viewer\\\\static\\\\lib\\\\basis\")",
+      "PowerShell($content = Get-Content \"c:\\\\Users\\\\paul\\\\Desktop\\\\lumina-spatial-viewer\\\\dist\\\\index.js\" -Raw; $workers = [System.Text.RegularExpressions.Regex]::Matches\\($content, '.{200}new Worker.{200}'\\); foreach\\($m in $workers\\) { Write-Host \"---\"; Write-Host $m.Value; Write-Host \"---\" })",
+      "PowerShell(cmd /c \"dir /a /s c:\\\\Users\\\\paul\\\\Desktop\\\\lumina-spatial-viewer\\\\plugins\")",
+      "PowerShell($content = Get-Content \"c:\\\\Users\\\\paul\\\\Desktop\\\\lumina-spatial-viewer\\\\static\\\\lcc-0.5.3.js\" -Raw; $pattern = 'new Worker\\\\\\([^\\)]{0,300}\\\\\\)'; $matches = [System.Text.RegularExpressions.Regex]::Matches\\($content, $pattern\\); Write-Host \"Found $\\($matches.Count\\) Worker calls:\"; foreach \\($m in $matches\\) { Write-Host \"=== Match at pos $\\($m.Index\\) ===\"; $start = [Math]::Max\\(0, $m.Index - 100\\); $end = [Math]::Min\\($content.Length, $m.Index + $m.Length + 100\\); Write-Host $content.Substring\\($start, $end - $start\\); Write-Host \"===\" })",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npx eslint *)",
+      "Bash(./node_modules/.bin/eslint src/voxel-collider.ts src/cameras/walk-controller.ts src/viewer.ts)",
+      "Bash(npm ci *)",
+      "Bash(node_modules/.bin/eslint src/voxel-collider.ts src/cameras/walk-controller.ts src/viewer.ts)",
+      "Bash(node -e ' *)"
+    ]
+  }
+}

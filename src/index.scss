@@ -1,0 +1,966 @@
+
+$clr-text: #E0DCDD;
+$clr-text-light: #fff;
+$clr-text-dark: #AAA;
+$clr-text-darkest: #666;
+$clr-accent: #DB146B;   // Lumina Primary Pink
+$clr-active: #006CD1;   // Lumina Primary Blue
+$clr-grip: #DB146B;
+
+$clr-bkg: #333;
+$clr-bkg-dark: #282828;
+$clr-bkg-darkest: #141414;
+$clr-bkg-light: #444;
+
+:root {
+    --canvas-opacity: 1;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    touch-action: none;
+}
+
+body {
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+canvas {
+    opacity: var(--canvas-opacity);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+button {
+    appearance: none;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.spacer {
+    flex-grow: 1;
+}
+
+#ui {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    // sit above the body-level measurement toolbar (700) and toast (800)
+    z-index: 900;
+}
+
+#ui * {
+    pointer-events: auto;
+}
+
+/* hide VR mode on touch devices (phones/tablets) regardless of orientation;
+   remains available on desktop with a mouse/trackpad when supported */
+@media (hover: none) and (pointer: coarse) {
+    #vrMode {
+        display: none !important;
+    }
+}
+
+.walkHint {
+    position: absolute;
+    top: max(60px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(black, 0.7);
+    color: $clr-text-light;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    pointer-events: auto;
+    white-space: nowrap;
+}
+
+/* branding link for third-party embeds */
+
+#supersplatBranding {
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+
+    color: $clr-text-light;
+
+    > svg {
+        height: 16px;
+        width: auto;
+        flex-shrink: 0;
+        padding: 8px;
+        border-radius: 6px;
+        background-color: rgba(black, 0.3);
+
+        > g {
+            &.stroke {
+                fill: black;
+                stroke: black;
+                stroke-width: 2;
+                stroke-linejoin: round;
+                opacity: 0.4;
+            }
+
+            &.fill {
+                fill: currentColor;
+                stroke: none;
+            }
+        }
+    }
+
+    > span {
+        font-size: 14px;
+        font-weight: bold;
+        text-shadow:
+            -1px -1px 0 rgba(black, 0.4),
+             1px -1px 0 rgba(black, 0.4),
+            -1px  1px 0 rgba(black, 0.4),
+             1px  1px 0 rgba(black, 0.4);
+    }
+}
+
+/* poster */
+
+#poster {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: var(--poster-url);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* loadingWrap */
+
+#loadingWrap {
+    position: fixed;
+    bottom: 120px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: min(380px, calc(100vw - 32px));
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 16px;
+
+    > #loadingText {
+        font-size: 18px;
+        color: $clr-text-light;
+        text-align: center;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+    }
+
+    > #loadingBar {
+        width: 100%;
+        height: 10px;
+        margin-top: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+}
+
+/* controlsWrap */
+
+#controlsWrap {
+    position: absolute;
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+
+    display: flex;
+    flex-direction: column;
+
+    &.faded-in {
+        visibility: visible;
+        opacity: 1;
+        transition: opacity 0.5s ease-out;
+    }
+
+    &.faded-out {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s 0.5s, opacity 0.5s ease-out;
+    }
+
+    > #timelineContainer {
+        height: 30px;
+        cursor: pointer;
+
+        > #line {
+            width: 100%;
+            height: 50%;
+            border-bottom: 4px solid #d9d9d9;
+        }
+
+        > #handle {
+            position: absolute;
+            top: 16.5px;
+            width: 12px;
+            height: 12px;
+            transform: translate(-50%, -50%);
+            border: 2px solid #d9d9d9;
+            border-radius: 50%;
+            background-color: $clr-grip;
+        }
+
+        > #time {
+            position: absolute;
+            top: 0;
+            padding: 2px 4px;
+            transform: translate(-50%, -100%);
+            font-size: 12px;
+            border-radius: 4px;
+
+            color: $clr-text-light;
+            background-color: rgba($clr-bkg-dark, 0.5);
+        }
+    }
+
+    > #resetCameraWrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 8px;
+
+        > #resetCamera {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: $clr-text-light;
+            background-color: $clr-accent;
+            transition: filter 150ms ease, transform 100ms ease;
+
+            &:hover {
+                filter: brightness(1.15);
+            }
+
+            &:active {
+                transform: scale(0.95);
+            }
+        }
+    }
+
+    > #buttonsContainer {
+        display: flex;
+        gap: 8px;
+
+        .buttonGroup {
+            display: flex;
+            background-color: rgba(black, 0.3);
+            border-radius: 6px;
+
+            &:not(:has(> :not(.hidden))) {
+                display: none;
+            }
+        }
+
+        /* controlButton */
+
+        .controlButton {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            margin: 0;
+            border: 0;
+            cursor: pointer;
+
+            color: $clr-text;
+            background-color: transparent;
+
+            &:hover {
+                color: $clr-text-light;
+                background-color: rgba($clr-active, 0.2);
+            }
+
+            /* icon styling */
+            > svg {
+                display: block;
+                margin: auto;
+
+                > g {
+                    &.stroke {
+                        fill: none;
+                        stroke: black;
+                        stroke-width: 2;
+                        stroke-linejoin: round;
+                        opacity: 0.4;
+                    }
+
+                    &.fill {
+                        fill: currentColor;
+                        stroke: none;
+                    }
+                }
+            }
+
+            /* active highlight for simple toggle buttons (e.g. voxel overlay) */
+            &.active:not(.toggle) {
+                color: $clr-active;
+                background-color: rgba($clr-active, 0.2);
+            }
+
+            /* camera toggle styling */
+            &.toggle {
+                background: linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    transparent 50%,
+                    $clr-accent 50%,
+                    $clr-accent 100%
+                );
+                background-size: 200% 100%;
+                background-position: 100% 0%;
+                background-repeat: no-repeat;
+                transition: background-position 0.1s ease-in-out;
+
+                &.left {
+                    border-radius: 4px 0px 0px 4px;
+
+                    &:not(.active) {
+                        background-position: 0% 0%;
+                    }
+                }
+
+                &.middle {
+                    border-radius: 0;
+
+                    &:not(.active) {
+                        background-position: 0% 0%;
+                    }
+                }
+
+                &.right {
+                    border-radius: 0px 4px 4px 0px;
+
+                    &:not(.active) {
+                        background-position: 200% 0%;
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+/* settingsPanel */
+
+#settingsPanel {
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 70px);
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(white, 0.08);
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+
+    font-size: 14px;
+
+    color: $clr-text;
+    background-color: rgba($clr-bkg, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    > .settingsRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        width: 100%;
+
+        > button {
+            flex-grow: 1;
+            height: 34px;
+            padding: 0 20px;
+            border: 1px solid rgba(white, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+
+            color: $clr-text-dark;
+            background-color: rgba(white, 0.04);
+            transition: background-color 250ms ease, color 250ms ease;
+
+            &:hover {
+                color: $clr-text-light;
+                background-color: rgba(white, 0.1);
+            }
+        }
+
+        > div {
+            height: 34px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            cursor: pointer;
+
+            color: $clr-text-dark;
+
+            &.toggleSwitch {
+                padding: 0 4px;
+
+                .toggleTrack {
+                    width: 36px;
+                    height: 20px;
+                    border-radius: 10px;
+                    background-color: rgba(white, 0.15);
+                    position: relative;
+                    transition: background-color 200ms ease;
+
+                    .toggleThumb {
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 50%;
+                        background-color: #777;
+                        position: absolute;
+                        top: 2px;
+                        left: 2px;
+                        transition: transform 200ms ease, background-color 200ms ease;
+                    }
+                }
+
+                &.active .toggleTrack {
+                    background-color: rgba($clr-accent, 0.35);
+
+                    .toggleThumb {
+                        transform: translateX(16px);
+                        background-color: $clr-accent;
+                    }
+                }
+            }
+
+            &:hover {
+                color: $clr-text;
+            }
+        }
+    }
+
+    > .divider {
+        width: 100%;
+        height: 1px;
+        margin: 8px 0;
+
+        background-color: rgba(white, 0.08);
+    }
+}
+
+/* infoPanel */
+
+#infoPanel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    // above all other in-UI elements (joystick, controls) when the help modal is open
+    z-index: 1000;
+    background-color: rgba(black, 0.4);
+    backdrop-filter: blur(2px);
+
+    > #infoPanelContent {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-height: 280px;
+        min-width: 320px;
+        // cap height to the viewport and scroll if the instructions don't fit
+        // (e.g. phones in landscape) instead of being clipped at the bottom
+        max-height: 85vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 8px;
+        border-radius: 16px;
+        border: 1px solid rgba(white, 0.08);
+        display: flex;
+        flex-direction: column;
+
+        color: $clr-text;
+        background-color: rgba($clr-bkg, 0.8);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+
+        > #tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            border-radius: 12px;
+
+            background-color: $clr-bkg-dark;
+
+            > .tab {
+                padding: 8px 12px;
+                border-radius: 10px;
+                cursor: pointer;
+                flex-grow: 1;
+                text-align: center;
+                font-weight: bold;
+                font-size: 14px;
+
+                color: $clr-text-dark;
+                transition: background-color 250ms ease, color 250ms ease;
+            }
+
+            > .tab:hover {
+                color: $clr-text-light;
+                background-color: rgba(white, 0.06);
+            }
+
+            > .tab.active {
+                color: $clr-text-light;
+                background-color: rgba(white, 0.1);
+            }
+        }
+
+        > #infoPanels {
+            padding: 16px;
+
+            .reset-tip {
+                font-size: 12px;
+                line-height: 1.5;
+                color: $clr-text-dark;
+                background-color: rgba($clr-accent, 0.1);
+                border: 1px solid rgba($clr-accent, 0.25);
+                border-radius: 8px;
+                padding: 10px 12px;
+                margin-bottom: 4px;
+
+                strong {
+                    color: $clr-accent;
+                    font-weight: 600;
+                }
+            }
+
+            h1 {
+                font-size: 11px;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                padding: 4px 0 8px 0;
+                color: $clr-accent;
+            }
+
+            .control-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 32px;
+                padding: 5px 8px;
+                margin: 0 -8px;
+                border-radius: 6px;
+                font-size: 13px;
+
+                > .control-action {
+                    text-align: left;
+                }
+
+                > .control-key {
+                    text-align: right;
+                    color: $clr-text-dark;
+                    font-size: 12px;
+                }
+
+                &:nth-child(odd) {
+                    background-color: rgba(white, 0.03);
+                }
+            }
+
+            .control-spacer {
+                margin: 14px 0;
+            }
+        }
+    }
+}
+
+#joystickBase {
+    position: absolute;
+    width: 56px;
+    height: 100px;
+    transform: translate(-50%, -50%);
+    border-radius: 28px;
+    touch-action: none;
+
+    background: linear-gradient(180deg, #0004 0%, #0000 30%, #0000 70%, #0004 100%);
+    background-color: #0003;
+    border: 2px solid #fff3;
+
+    transition: width 0.2s ease, height 0.2s ease, border-radius 0.2s ease;
+
+    > #joystick {
+        position: absolute;
+        left: 8px;  // (56 - 40) / 2 = 8px to center horizontally
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        touch-action: none;
+
+        background-color: #fff8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+        transition: left 0.1s ease;
+    }
+
+    // 2D mode: square joystick with full directional movement
+    &.mode-2d {
+        width: 100px;
+        height: 100px;
+        border-radius: 50px;
+        background: radial-gradient(circle, #0000 40%, #0004 100%);
+        background-color: #0003;
+
+        > #joystick {
+            left: 30px;  // (100 - 40) / 2 = 30px to center horizontally
+        }
+    }
+}
+
+#tooltip {
+    display: none;
+    position: absolute;
+    border-radius: 4px;
+    padding: 4px 4px;
+    font-size: 12px;
+
+    color: $clr-text;
+    background-color: $clr-bkg-dark;
+}
+
+#annotations {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+#annotations * {
+    pointer-events: auto;
+}
+
+/* annotationNav */
+
+#annotationNav {
+    pointer-events: none;
+
+    &.faded-in {
+        visibility: visible;
+        opacity: 1;
+        transition: opacity 0.5s ease-out;
+    }
+
+    &.faded-out {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s 0.5s, opacity 0.5s ease-out;
+    }
+
+    > button {
+        pointer-events: auto;
+        appearance: none;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        color: $clr-text;
+        background-color: rgba(black, 0.3);
+
+        &:hover {
+            color: $clr-text-light;
+            background-color: rgba(black, 0.5);
+        }
+
+        > svg {
+            display: block;
+
+            > g {
+                &.stroke {
+                    fill: none;
+                    stroke: black;
+                    stroke-width: 3;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                    opacity: 0.4;
+                }
+
+                &.fill {
+                    fill: none;
+                    stroke: currentColor;
+                    stroke-width: 2;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+            }
+        }
+    }
+
+    // Horizontal bar at top center — identical on desktop and touch so mobile
+    // shows the left arrow, annotation title, and right arrow just like desktop
+    &.desktop,
+    &.touch {
+        position: absolute;
+        top: max(16px, env(safe-area-inset-top));
+        left: 50%;
+        transform: translateX(-50%);
+
+        display: flex;
+        align-items: center;
+        gap: 0;
+
+        border-radius: 6px;
+        overflow: hidden;
+        background-color: rgba(black, 0.6);
+
+        > button {
+            width: 34px;
+            height: 34px;
+            background-color: transparent;
+
+            &:hover {
+                background-color: rgba(white, 0.1);
+            }
+
+            &:active {
+                background-color: rgba(white, 0.15);
+            }
+        }
+
+        > #annotationInfo {
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+            white-space: nowrap;
+            width: 240px;
+
+            > #annotationNavTitle {
+                font-size: 14px;
+                color: $clr-text-light;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+    }
+}
+
+/* Lumina logo */
+
+#luminaLogo {
+    // top-left on desktop; hidden on mobile to maximise screen space for the tour
+    top: 20px;
+    left: 20px;
+    width: 105px;
+
+    @media (max-width: 480px) {
+        display: none;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Measurement tool overlay (ported from the construction viewer)      */
+/* ------------------------------------------------------------------ */
+
+:root {
+    --lumina-brand: #db146b;
+    --lumina-brand-soft: rgba(219, 20, 107, 0.35);
+    --lumina-fg: #f5f3f4;
+}
+
+/* Tool overlay (right edge) */
+#lumina-toolbar {
+    position: fixed;
+    right: calc(10px + env(safe-area-inset-right));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 700;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-family:
+        'Inter',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+}
+
+.lumina-toolbar__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 6px;
+    border-radius: 999px;
+    background: rgba(14, 14, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Collapsible container for the measurement tools — animates open/closed */
+.lumina-toolbar__items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    transition:
+        max-height 0.28s ease,
+        opacity 0.2s ease,
+        margin-top 0.28s ease;
+}
+
+.lumina-toolbar__group.expanded .lumina-toolbar__items {
+    max-height: 220px;
+    opacity: 1;
+    margin-top: 4px;
+}
+
+.lumina-toolbar__btn {
+    width: 42px;
+    height: 42px;
+    padding: 9px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: rgba(245, 243, 244, 0.85);
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.1s ease;
+    touch-action: manipulation;
+}
+
+.lumina-toolbar__btn svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.lumina-toolbar__btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.lumina-toolbar__btn:active {
+    transform: scale(0.92);
+}
+
+.lumina-toolbar__btn.active {
+    background: var(--lumina-brand);
+    color: #fff;
+    box-shadow: 0 0 14px var(--lumina-brand-soft);
+}
+
+.lumina-toolbar__btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Measurement labels + toast */
+#lumina-measure-labels {
+    position: fixed;
+    inset: 0;
+    z-index: 650;
+    pointer-events: none;
+    overflow: hidden;
+    font-family:
+        'Inter',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+}
+
+.lumina-measure-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(14, 14, 18, 0.82);
+    border: 1px solid var(--lumina-brand);
+    color: var(--lumina-fg);
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    will-change: transform;
+}
+
+.lumina-measure-label--total {
+    background: var(--lumina-brand);
+    border-color: var(--lumina-brand);
+    color: #fff;
+    box-shadow: 0 0 12px var(--lumina-brand-soft);
+}
+
+#lumina-toast {
+    position: fixed;
+    top: calc(14px + env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 800;
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: rgba(14, 14, 18, 0.85);
+    border: 1px solid rgba(219, 20, 107, 0.5);
+    backdrop-filter: blur(8px);
+    color: var(--lumina-fg);
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    font-family:
+        'Inter',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+}
+
+#lumina-toast.lumina-toast--hidden {
+    opacity: 0;
+}

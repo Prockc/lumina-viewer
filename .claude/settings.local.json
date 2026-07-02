@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(grep -l lcc c:/Users/paul/Desktop/lumina-spatial-viewer/src/*.ts c:/Users/paul/Desktop/lumina-spatial-viewer/src/*.tsx)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}
