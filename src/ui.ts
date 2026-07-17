@@ -34,7 +34,7 @@ const initJoystick = (
 
     // Update joystick visibility based on camera mode and input mode
     const updateJoystickVisibility = () => {
-        if ((state.cameraMode === 'fly' || state.cameraMode === 'walk') && state.inputMode === 'touch' && state.gamingControls) {
+        if (state.cameraMode === 'fly' && state.inputMode === 'touch') {
             dom.joystickBase.classList.remove('hidden');
             dom.joystickBase.classList.toggle('mode-2d', joystickMode === '2d');
             dom.joystickBase.style.left = `${joystickFixedX}px`;
@@ -580,9 +580,7 @@ const initUI = (global: Global) => {
         if (state.inputMode === 'desktop') {
             return 'Click to walk. WASD to move freely.';
         }
-        return state.gamingControls ?
-            'Use the joystick to move. Drag to look around. Tap to jump.' :
-            'Tap to walk. Drag to look around.';
+        return 'Tap to walk. Drag to look around.';
     };
 
     events.on('cameraMode:changed', (value: string) => {
