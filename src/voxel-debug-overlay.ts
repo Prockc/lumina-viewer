@@ -64,7 +64,7 @@ struct Uniforms {
     treeDepth: u32,
     projScaleY: f32,
     displayMode: u32,
-    pad2: u32
+    axisFlip: f32
 };
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -227,9 +227,11 @@ fn main(@builtin(global_invocation_id) gid: vec3u) {
     var worldFar = uniforms.invVP * clipFar;
     worldFar = worldFar / worldFar.w;
 
-    // Convert from PlayCanvas world space to voxel space (negate X and Y)
-    let ro = vec3f(-worldNear.x, -worldNear.y, worldNear.z);
-    let rd = normalize(vec3f(-(worldFar.x - worldNear.x), -(worldFar.y - worldNear.y), worldFar.z - worldNear.z));
+    // Convert from PlayCanvas world space to voxel space. axisFlip is -1 for grids whose
+    // voxel space is rotated 180 degrees about Z, and 1 when the two spaces agree.
+    let af = uniforms.axisFlip;
+    let ro = vec3f(af * worldNear.x, af * worldNear.y, worldNear.z);
+    let rd = normalize(vec3f(af * (worldFar.x - worldNear.x), af * (worldFar.y - worldNear.y), worldFar.z - worldNear.z));
 
     // Grid AABB
     let gridMin = vec3f(uniforms.gridMinX, uniforms.gridMinY, uniforms.gridMinZ);
@@ -515,7 +517,7 @@ class VoxelDebugOverlay {
                     new UniformFormat('treeDepth', UNIFORMTYPE_UINT),
                     new UniformFormat('projScaleY', UNIFORMTYPE_FLOAT),
                     new UniformFormat('displayMode', UNIFORMTYPE_UINT),
-                    new UniformFormat('pad2', UNIFORMTYPE_UINT)
+                    new UniformFormat('axisFlip', UNIFORMTYPE_FLOAT)
                 ])
             },
             computeBindGroupFormat: new BindGroupFormat(device, [
@@ -638,7 +640,7 @@ class VoxelDebugOverlay {
         compute.setParameter('treeDepth', collider.treeDepth);
         compute.setParameter('projScaleY', cam.projectionMatrix.data[5]);
         compute.setParameter('displayMode', this.mode === 'heatmap' ? 1 : 0);
-        compute.setParameter('pad2', 0);
+        compute.setParameter('axisFlip', collider.axisSign);
 
         // Set storage buffers and output texture
         compute.setParameter('nodes', this.nodesBuffer);

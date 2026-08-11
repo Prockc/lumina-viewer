@@ -1,10 +1,8 @@
-import { Mat4 } from 'playcanvas';
-
 /**
  * Metadata for a voxel octree file (matches the .voxel.json format from splat-transform).
  */
 interface VoxelMetadata {
-    version: string;
+    version?: string;
     gridBounds: { min: number[]; max: number[] };
     gaussianBounds: { min: number[]; max: number[] };
     voxelResolution: number;
@@ -167,6 +165,9 @@ class VoxelCollider {
     /** Leaf voxel masks: pairs of (lo, hi) Uint32 per mixed leaf */
     private _leafData: Uint32Array;
 
+    /** Whether voxel space is X/Y-negated relative to PlayCanvas world space */
+    private _flipped: boolean;
+
     /** Pre-allocated scratch push-out vector to avoid per-frame allocations */
     private readonly _push: PushOut = { x: 0, y: 0, z: 0 };
 
@@ -179,12 +180,6 @@ class VoxelCollider {
         { x: 0, y: 0, z: 0 },
         { x: 0, y: 0, z: 0 }
     ];
-
-    /** Voxel-space → world-space transform (copy of the gsplat entity's world transform). */
-    private _voxelToWorld: Mat4 | null = null;
-
-    /** World-space → voxel-space transform (inverse of the entity world transform). */
-    private _worldToVoxel: Mat4 | null = null;
 
     constructor(
         metadata: VoxelMetadata,
@@ -203,6 +198,9 @@ class VoxelCollider {
         this._treeDepth = metadata.treeDepth;
         this._nodes = nodes;
         this._leafData = leafData;
+        // Grids written before format 1.1 store the model rotated 180 degrees about Z
+        // relative to PlayCanvas world space.
+        this._flipped = !metadata.version || parseFloat(metadata.version) < 1.1;
     }
 
     /**
@@ -319,27 +317,125 @@ class VoxelCollider {
     }
 
     /**
-     * Store the gsplat entity's world transform so the walk controller can convert
-     * between PlayCanvas world space and voxel space for any combination of
-     * translation, rotation, and scale.
+     * Whether voxel space is X/Y-negated relative to PlayCanvas world space.
      *
-     * @param entityWorldTransform - The entity's world transform (from Entity.getWorldTransform()).
+     * @returns {boolean} True when the axes must be negated to convert between the two spaces.
      */
-    setEntityTransform(entityWorldTransform: Mat4): void {
-        if (!this._voxelToWorld) {
-            this._voxelToWorld = new Mat4();
-            this._worldToVoxel = new Mat4();
+    get flipped(): boolean {
+        return this._flipped;
+    }
+
+    /**
+     * Sign applied to X and Y when converting between PlayCanvas world space and voxel
+     * space. The conversion is a 180-degree rotation about Z, which is its own inverse,
+     * so the same sign serves both directions.
+     *
+     * @returns {number} -1 when flipped, 1 otherwise.
+     */
+    get axisSign(): number {
+        return this._flipped ? -1 : 1;
+    }
+
+    /**
+     * Cast a ray given in PlayCanvas world space and return the hit point in the same space.
+     *
+     * @param ox - Ray origin X in world units.
+     * @param oy - Ray origin Y in world units.
+     * @param oz - Ray origin Z in world units.
+     * @param dx - Ray direction X (must be normalized).
+     * @param dy - Ray direction Y (must be normalized).
+     * @param dz - Ray direction Z (must be normalized).
+     * @param maxDist - Maximum ray distance.
+     * @returns The world-space entry point on the first solid voxel, or null if no hit.
+     */
+    worldQueryRay(
+        ox: number, oy: number, oz: number,
+        dx: number, dy: number, dz: number,
+        maxDist: number
+    ): RayHit | null {
+        const s = this.axisSign;
+        const hit = this.queryRay(s * ox, s * oy, oz, s * dx, s * dy, dz, maxDist);
+        if (!hit) {
+            return null;
         }
-        this._voxelToWorld.copy(entityWorldTransform);
-        this._worldToVoxel.copy(entityWorldTransform).invert();
+        hit.x *= s;
+        hit.y *= s;
+        return hit;
     }
 
-    get voxelToWorld(): Mat4 | null {
-        return this._voxelToWorld;
+    /**
+     * Query a sphere given in PlayCanvas world space, writing a world-space push-out vector.
+     *
+     * @param cx - Sphere center X in world units.
+     * @param cy - Sphere center Y in world units.
+     * @param cz - Sphere center Z in world units.
+     * @param radius - Sphere radius in world units.
+     * @param out - Object to receive the world-space push-out vector.
+     * @returns True if a collision was detected and out was written.
+     */
+    worldQuerySphere(
+        cx: number, cy: number, cz: number,
+        radius: number,
+        out: PushOut
+    ): boolean {
+        const s = this.axisSign;
+        if (!this.querySphere(s * cx, s * cy, cz, radius, out)) {
+            return false;
+        }
+        out.x *= s;
+        out.y *= s;
+        return true;
     }
 
-    get worldToVoxel(): Mat4 | null {
-        return this._worldToVoxel;
+    /**
+     * Query a vertical capsule given in PlayCanvas world space, writing a world-space
+     * push-out vector. The capsule stays vertical under the conversion, so halfHeight
+     * and radius pass through unchanged.
+     *
+     * @param cx - Capsule center X in world units.
+     * @param cy - Capsule center Y in world units.
+     * @param cz - Capsule center Z in world units.
+     * @param halfHeight - Half-height of the capsule's inner line segment in world units.
+     * @param radius - Capsule radius in world units.
+     * @param out - Object to receive the world-space push-out vector.
+     * @returns True if a collision was detected and out was written.
+     */
+    worldQueryCapsule(
+        cx: number, cy: number, cz: number,
+        halfHeight: number,
+        radius: number,
+        out: PushOut
+    ): boolean {
+        const s = this.axisSign;
+        if (!this.queryCapsule(s * cx, s * cy, cz, halfHeight, radius, out)) {
+            return false;
+        }
+        out.x *= s;
+        out.y *= s;
+        return true;
+    }
+
+    /**
+     * Compute a surface normal for a point and ray direction given in PlayCanvas world
+     * space, returning the normal in the same space.
+     *
+     * @param x - World X coordinate of the surface point.
+     * @param y - World Y coordinate of the surface point.
+     * @param z - World Z coordinate of the surface point.
+     * @param rdx - Ray direction X (toward the surface, in world space).
+     * @param rdy - Ray direction Y.
+     * @param rdz - Ray direction Z.
+     * @returns Object with nx, ny, nz components of the world-space surface normal.
+     */
+    worldQuerySurfaceNormal(
+        x: number, y: number, z: number,
+        rdx: number, rdy: number, rdz: number
+    ): { nx: number; ny: number; nz: number } {
+        const s = this.axisSign;
+        const normal = this.querySurfaceNormal(s * x, s * y, z, s * rdx, s * rdy, rdz);
+        normal.nx *= s;
+        normal.ny *= s;
+        return normal;
     }
 
     /**
@@ -366,8 +462,10 @@ class VoxelCollider {
         const buffer = await binResponse.arrayBuffer();
         const view = new Uint32Array(buffer);
 
-        const nodes = view.slice(0, metadata.nodeCount);
-        const leafData = view.slice(metadata.nodeCount, metadata.nodeCount + metadata.leafDataCount);
+        // subarray (not slice) so the node and leaf arrays are zero-copy views onto the
+        // fetched buffer rather than duplicating it in memory
+        const nodes = view.subarray(0, metadata.nodeCount);
+        const leafData = view.subarray(metadata.nodeCount, metadata.nodeCount + metadata.leafDataCount);
 
         return new VoxelCollider(metadata, nodes, leafData);
     }

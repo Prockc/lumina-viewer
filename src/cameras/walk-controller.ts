@@ -20,10 +20,6 @@ const moveStep = [0, 0, 0];
 const offset = new Vec3();
 const rotation = new Quat();
 
-/** Pre-allocated temporaries for world ↔ voxel coordinate conversion */
-const wpA = new Vec3();
-const vpA = new Vec3();
-
 /**
  * First-person camera controller with spring-damper suspension over voxel terrain.
  *
@@ -289,8 +285,6 @@ class WalkController implements CameraController {
     private _probeGround(pos: Vec3): number | null {
         if (!this.collider) return null;
 
-        const invM = this.collider.worldToVoxel;
-        const fwdM = this.collider.voxelToWorld;
         const r = this.capsuleRadius;
         const range = this.groundProbeRange;
         const foot = pos.y - this.eyeHeight;
@@ -299,35 +293,15 @@ class WalkController implements CameraController {
         let hitCount = 0;
 
         for (let i = 0; i < 5; i++) {
-            let vx: number, vy: number, vz: number;
+            let wx = pos.x, wz = pos.z;
+            if (i === 1) wx -= r;
+            else if (i === 2) wx += r;
+            else if (i === 3) wz += r;
+            else if (i === 4) wz -= r;
 
-            if (invM) {
-                let wx = pos.x, wz = pos.z;
-                if (i === 1) wx -= r;
-                else if (i === 2) wx += r;
-                else if (i === 3) wz += r;
-                else if (i === 4) wz -= r;
-                wpA.set(wx, foot, wz);
-                invM.transformPoint(wpA, vpA);
-                vx = vpA.x; vy = vpA.y; vz = vpA.z;
-            } else {
-                // fallback: 180° Z rotation (negate X, negate Y)
-                vx = -pos.x; vy = -foot; vz = pos.z;
-                if (i === 1) vx -= r;
-                else if (i === 2) vx += r;
-                else if (i === 3) vz += r;
-                else if (i === 4) vz -= r;
-            }
-
-            const hit = this.collider.queryRay(vx, vy, vz, 0, 1, 0, range);
+            const hit = this.collider.worldQueryRay(wx, foot, wz, 0, -1, 0, range);
             if (hit) {
-                if (fwdM) {
-                    vpA.set(hit.x, hit.y, hit.z);
-                    fwdM.transformPoint(vpA, wpA);
-                    totalY += wpA.y;
-                } else {
-                    totalY += -hit.y;
-                }
+                totalY += hit.y;
                 hitCount++;
             }
         }
@@ -346,29 +320,8 @@ class WalkController implements CameraController {
         const center = pos.y - this.eyeHeight + this.capsuleHeight * 0.5;
         const half = this.capsuleHeight * 0.5 - this.capsuleRadius;
 
-        const invM = this.collider!.worldToVoxel;
-        const fwdM = this.collider!.voxelToWorld;
-
-        let vx: number, vy: number, vz: number;
-        if (invM) {
-            wpA.set(pos.x, center, pos.z);
-            invM.transformPoint(wpA, vpA);
-            vx = vpA.x; vy = vpA.y; vz = vpA.z;
-        } else {
-            // fallback: 180° Z rotation (negate X, negate Y, keep Z)
-            vx = -pos.x;
-            vy = -center;
-            vz = pos.z;
-        }
-
-        if (this.collider!.queryCapsule(vx, vy, vz, half, this.capsuleRadius, out)) {
-            if (fwdM) {
-                vpA.set(out.x, out.y, out.z);
-                fwdM.transformVector(vpA, wpA);
-                disp.copy(wpA);
-            } else {
-                disp.set(-out.x, -out.y, out.z);
-            }
+        if (this.collider!.worldQueryCapsule(pos.x, center, pos.z, half, this.capsuleRadius, out)) {
+            disp.set(out.x, out.y, out.z);
             pos.add(disp);
 
             // ceiling collision: cancel upward velocity

@@ -697,7 +697,7 @@ button {
         align-items: center;
         justify-content: center;
 
-        color: $clr-text;
+        color: $clr-text-light;
         background-color: rgba(black, 0.3);
 
         &:hover {
@@ -715,7 +715,7 @@ button {
                     stroke-width: 3;
                     stroke-linecap: round;
                     stroke-linejoin: round;
-                    opacity: 0.4;
+                    opacity: 0.2;
                 }
 
                 &.fill {
@@ -744,7 +744,7 @@ button {
 
         border-radius: 6px;
         overflow: hidden;
-        background-color: rgba(black, 0.6);
+        background-color: $clr-accent;
 
         > button {
             width: 34px;
@@ -758,6 +758,12 @@ button {
             &:active {
                 background-color: rgba(white, 0.15);
             }
+        }
+
+        // chevrons read as white against the accent bar
+        > #annotationPrev,
+        > #annotationNext {
+            color: $clr-text-light;
         }
 
         > #annotationInfo {
@@ -894,6 +900,24 @@ button {
     opacity: 0.3;
     cursor: default;
     pointer-events: none;
+}
+
+/* Primary ruler toggle: brand pink with a white icon so it reads as the
+   entry point to the measurement tools */
+.lumina-toolbar__btn.lumina-toolbar__toggle {
+    background: $clr-accent;
+    color: $clr-text-light;
+
+    &:hover {
+        background: $clr-accent;
+        filter: brightness(1.15);
+    }
+
+    &.active {
+        background: $clr-accent;
+        color: $clr-text-light;
+        box-shadow: 0 0 14px var(--lumina-brand-soft);
+    }
 }
 
 /* Measurement labels + toast */

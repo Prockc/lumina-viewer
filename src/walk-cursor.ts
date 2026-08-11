@@ -238,9 +238,9 @@ class WalkCursor {
         camera.camera.screenToWorld(offsetX, offsetY, 1.0, tmpV);
         tmpV.sub(cameraPos).normalize();
 
-        const hit = collider.queryRay(
-            -cameraPos.x, -cameraPos.y, cameraPos.z,
-            -tmpV.x, -tmpV.y, tmpV.z,
+        const hit = collider.worldQueryRay(
+            cameraPos.x, cameraPos.y, cameraPos.z,
+            tmpV.x, tmpV.y, tmpV.z,
             camera.camera.farClip
         );
 
@@ -250,16 +250,13 @@ class WalkCursor {
             return;
         }
 
-        const px = -hit.x;
-        const py = -hit.y;
+        const px = hit.x;
+        const py = hit.y;
         const pz = hit.z;
 
-        const rdx = -tmpV.x;
-        const rdy = -tmpV.y;
-        const rdz = tmpV.z;
-        const sn = collider.querySurfaceNormal(hit.x, hit.y, hit.z, rdx, rdy, rdz);
-        let nx = -sn.nx;
-        let ny = -sn.ny;
+        const sn = collider.worldQuerySurfaceNormal(hit.x, hit.y, hit.z, tmpV.x, tmpV.y, tmpV.z);
+        let nx = sn.nx;
+        let ny = sn.ny;
         let nz = sn.nz;
 
         if (this.hasSmoothedNormal) {

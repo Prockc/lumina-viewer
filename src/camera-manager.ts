@@ -79,6 +79,14 @@ class CameraManager {
         controllers.fly.collider = collider;
         controllers.walk.collider = collider;
 
+        // optional walkHeight from settings.json raises/lowers the eye and grows the
+        // capsule by the same amount, so head clearance tracks the new eye height
+        if (typeof settings.walkHeight === 'number' && settings.walkHeight > 0) {
+            const walk = controllers.walk;
+            walk.capsuleHeight += settings.walkHeight - walk.eyeHeight;
+            walk.eyeHeight = settings.walkHeight;
+        }
+
         const walkSource = new WalkSource();
         walkSource.onComplete = () => {
             events.fire('walkComplete');

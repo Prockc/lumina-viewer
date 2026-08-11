@@ -68,6 +68,10 @@ type ExperienceSettings = {
     tonemapping: 'none' | 'linear' | 'filmic' | 'hejl' | 'aces' | 'aces2' | 'neutral',
     highPrecisionRendering: boolean,
     soundUrl?: string,
+
+    // eye height in meters for walk mode; the collision capsule grows to match
+    walkHeight?: number,
+
     background: {
         color: [number, number, number],
         skyboxUrl?: string

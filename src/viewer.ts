@@ -362,12 +362,6 @@ class Viewer {
 
             state.hasCollision = !!collider;
 
-            // Inherit the gsplat entity's full world transform (rotation, translation, scale).
-            // The walk controller uses this to convert between world space and voxel space correctly.
-            if (gsplatEntity && collider) {
-                collider.setEntityTransform(gsplatEntity.getWorldTransform());
-            }
-
             // Create voxel debug overlay (WebGPU compute shader, requires supportsCompute)
             if (collider && config.webgpu && app.graphicsDevice.supportsCompute) {
                 this.voxelOverlay = new VoxelDebugOverlay(app, collider, camera);
@@ -388,9 +382,9 @@ class Viewer {
                 const gMaxY = gMinY + collider.numVoxelsY * res;
                 const gMaxZ = gMinZ + collider.numVoxelsZ * res;
 
-                // Transform all 8 corners of the voxel AABB to world space via the entity transform.
-                // This gives a correct world-space AABB regardless of rotation/translation/scale.
-                const fwdM = collider.voxelToWorld;
+                // Transform all 8 corners of the voxel AABB to world space using the same
+                // axis convention the collision queries use.
+                const axisSign = collider.axisSign;
                 const voxCorners: [number, number, number][] = [
                     [gMinX, gMinY, gMinZ], [gMaxX, gMinY, gMinZ],
                     [gMinX, gMaxY, gMinZ], [gMaxX, gMaxY, gMinZ],
@@ -399,15 +393,9 @@ class Viewer {
                 ];
                 const pcMin = new Vec3(Infinity, Infinity, Infinity);
                 const pcMax = new Vec3(-Infinity, -Infinity, -Infinity);
-                const voxPt = new Vec3();
                 const worldPt = new Vec3();
                 for (const [cx, cy, cz] of voxCorners) {
-                    voxPt.set(cx, cy, cz);
-                    if (fwdM) {
-                        fwdM.transformPoint(voxPt, worldPt);
-                    } else {
-                        worldPt.set(-cx, -cy, cz);
-                    }
+                    worldPt.set(axisSign * cx, axisSign * cy, cz);
                     if (worldPt.x < pcMin.x) pcMin.x = worldPt.x;
                     if (worldPt.y < pcMin.y) pcMin.y = worldPt.y;
                     if (worldPt.z < pcMin.z) pcMin.z = worldPt.z;

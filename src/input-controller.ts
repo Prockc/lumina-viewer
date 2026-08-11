@@ -360,14 +360,21 @@ class InputController {
             }
         });
 
+        // requestPointerLock() resolves asynchronously, so a lock can still arrive after
+        // the user has pressed Escape or left walk mode. This tracks whether the lock is
+        // still wanted by the time it lands.
+        let pointerLockDesired = false;
+
         const activatePointerLock = () => {
+            pointerLockDesired = true;
             (this._desktopInput as any)._pointerLock = true;
             canvas.requestPointerLock();
         };
 
         const deactivatePointerLock = () => {
+            pointerLockDesired = false;
             (this._desktopInput as any)._pointerLock = false;
-            if (document.pointerLockElement === canvas) {
+            if (document.pointerLockElement) {
                 document.exitPointerLock();
             }
         };
@@ -376,7 +383,7 @@ class InputController {
         events.on('cameraMode:changed', (value: string, prev: string) => {
             if (value === 'walk' && state.inputMode === 'desktop' && state.gamingControls) {
                 activatePointerLock();
-            } else if (prev === 'walk') {
+            } else if (prev === 'walk' || pointerLockDesired || document.pointerLockElement) {
                 deactivatePointerLock();
             }
             updateCanvasCursor();
@@ -395,7 +402,21 @@ class InputController {
         });
 
         document.addEventListener('pointerlockchange', () => {
-            if (!document.pointerLockElement && state.cameraMode === 'walk' && state.gamingControls) {
+            if (document.pointerLockElement) {
+                // A lock we asked for before the user backed out; drop it immediately
+                // rather than leaving the pointer captured with no way to release it.
+                if (!pointerLockDesired) {
+                    (this._desktopInput as any)._pointerLock = false;
+                    document.exitPointerLock();
+                }
+                return;
+            }
+
+            // Lock released (Escape, tab switch, or our own exitPointerLock)
+            pointerLockDesired = false;
+            (this._desktopInput as any)._pointerLock = false;
+
+            if (state.cameraMode === 'walk' && state.gamingControls) {
                 recentlyExitedWalk = true;
                 requestAnimationFrame(() => {
                     recentlyExitedWalk = false;
@@ -411,6 +432,7 @@ class InputController {
         // Pointer lock request rejected (e.g., no user gesture, document hidden).
         // Revert to avoid being stuck in walk mode without mouse capture.
         document.addEventListener('pointerlockerror', () => {
+            pointerLockDesired = false;
             (this._desktopInput as any)._pointerLock = false;
             if (state.inputMode === 'desktop') {
                 state.gamingControls = false;
@@ -429,22 +451,18 @@ class InputController {
         camera.camera.screenToWorld(offsetX, offsetY, 1.0, tmpV1);
         tmpV1.sub(cameraPos).normalize();
 
-        // PlayCanvas → voxel space: negate X and Y
-        const hit = this.collider.queryRay(
-            -cameraPos.x, -cameraPos.y, cameraPos.z,
-            -tmpV1.x, -tmpV1.y, tmpV1.z,
+        const hit = this.collider.worldQueryRay(
+            cameraPos.x, cameraPos.y, cameraPos.z,
+            tmpV1.x, tmpV1.y, tmpV1.z,
             camera.camera.farClip
         );
 
         if (!hit) return null;
 
-        const rdx = -tmpV1.x;
-        const rdy = -tmpV1.y;
-        const rdz = tmpV1.z;
-        const sn = this.collider.querySurfaceNormal(hit.x, hit.y, hit.z, rdx, rdy, rdz);
+        const sn = this.collider.worldQuerySurfaceNormal(hit.x, hit.y, hit.z, tmpV1.x, tmpV1.y, tmpV1.z);
         return {
-            position: new Vec3(-hit.x, -hit.y, hit.z),
-            normal: new Vec3(-sn.nx, -sn.ny, sn.nz)
+            position: new Vec3(hit.x, hit.y, hit.z),
+            normal: new Vec3(sn.nx, sn.ny, sn.nz)
         };
     }
 
