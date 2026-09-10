@@ -15,6 +15,9 @@ const CIRCLE_INNER_RADIUS = 0.17;
 const BEZIER_K = 1 / 6;
 const NORMAL_SMOOTH_FACTOR = 0.25;
 
+/** Lumina Spatial brand pink, used for the walk-mode reticle and target. */
+const CURSOR_COLOR = '#DB146B';
+
 const tmpV = new Vec3();
 const tmpScreen = new Vec3();
 const tangent = new Vec3();
@@ -105,7 +108,7 @@ class WalkCursor {
 
         // Hover cursor: thick ring
         this.cursorPath = document.createElementNS(SVGNS, 'path');
-        this.cursorPath.setAttribute('fill', 'white');
+        this.cursorPath.setAttribute('fill', CURSOR_COLOR);
         this.cursorPath.setAttribute('fill-opacity', '0.6');
         this.cursorPath.setAttribute('fill-rule', 'evenodd');
         this.cursorPath.setAttribute('stroke', 'none');
@@ -113,7 +116,7 @@ class WalkCursor {
 
         // Walk target: filled circle
         this.targetPath = document.createElementNS(SVGNS, 'path');
-        this.targetPath.setAttribute('fill', 'white');
+        this.targetPath.setAttribute('fill', CURSOR_COLOR);
         this.targetPath.setAttribute('fill-opacity', '0.5');
         this.targetPath.setAttribute('stroke', 'none');
         this.targetPath.style.display = 'none';

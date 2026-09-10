@@ -350,16 +350,46 @@ class MeasureTool {
 
 /** Splat captures are metric (meters); labels display Imperial units. */
 const INCHES_PER_METER = 39.3701;
-const SQ_INCHES_PER_SQ_METER = INCHES_PER_METER * INCHES_PER_METER;
+const INCHES_PER_FOOT = 12;
+const SQ_FEET_PER_SQ_METER = (INCHES_PER_METER / INCHES_PER_FOOT) ** 2;
 
+/**
+ * Format a length for display: inches on their own up to a foot, feet and inches
+ * beyond that (e.g. 5' 4"). A whole number of inches drops the decimal.
+ *
+ * @param meters - Length in scene units (meters).
+ * @returns The formatted length.
+ */
 function formatLength(meters: number): string {
     const inches = meters * INCHES_PER_METER;
-    return `${inches.toFixed(1)} in`;
+
+    if (inches <= INCHES_PER_FOOT) {
+        return `${inches.toFixed(1)} in`;
+    }
+
+    let feet = Math.floor(inches / INCHES_PER_FOOT);
+
+    // display to a tenth of an inch; a remainder that rounds up to a full foot
+    // carries into the feet rather than reading as 12"
+    let remainder = Math.round((inches - feet * INCHES_PER_FOOT) * 10) / 10;
+    if (remainder >= INCHES_PER_FOOT) {
+        feet += 1;
+        remainder = 0;
+    }
+
+    // number-to-string drops a trailing .0, so a whole inch reads as 5' 4"
+    return `${feet}' ${remainder}"`;
 }
 
+/**
+ * Format an area for display in square feet.
+ *
+ * @param squareMeters - Area in square scene units.
+ * @returns The formatted area.
+ */
 function formatArea(squareMeters: number): string {
-    const squareInches = squareMeters * SQ_INCHES_PER_SQ_METER;
-    return `${squareInches.toFixed(0)} in²`;
+    const squareFeet = squareMeters * SQ_FEET_PER_SQ_METER;
+    return `${squareFeet.toFixed(1)} sq ft`;
 }
 
 /**
