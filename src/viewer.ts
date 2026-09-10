@@ -352,7 +352,8 @@ class Viewer {
                 this.measureTool = new MeasureTool(global);
                 const measureToolbar = installMeasureToolbar({
                     onMeasureMode: mode => this.measureTool.setMode(mode),
-                    onClearMeasurements: () => this.measureTool.clear()
+                    onClearMeasurements: () => this.measureTool.clear(),
+                    onUnitMode: unit => this.measureTool.setUnitMode(unit)
                 });
                 this.measureTool.onChange = count => measureToolbar.setHasMeasurements(count > 0);
             }

@@ -8,6 +8,14 @@ type InputMode = 'desktop' | 'touch';
 
 type MeasureMode = 'distance' | 'area' | null;
 
+/**
+ * Display units for measurement readouts.
+ *   auto        - inches up to a foot, feet and inches beyond
+ *   inches      - always inches
+ *   feetInches  - always feet and inches
+ */
+type MeasureUnit = 'auto' | 'inches' | 'feetInches';
+
 // configuration options are immutable at runtime
 type Config = {
     poster?: HTMLImageElement;
@@ -63,4 +71,4 @@ type Global = {
     camera: Entity;
 };
 
-export { CameraMode, InputMode, MeasureMode, Config, State, Global };
+export { CameraMode, InputMode, MeasureMode, MeasureUnit, Config, State, Global };

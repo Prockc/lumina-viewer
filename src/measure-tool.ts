@@ -13,7 +13,7 @@ import {
 } from 'playcanvas';
 
 import { Picker } from './picker';
-import type { Global, MeasureMode } from './types';
+import type { Global, MeasureMode, MeasureUnit } from './types';
 
 const BRAND = { r: 0xdb / 255, g: 0x14 / 255, b: 0x6b / 255 };
 /** Max tap travel (px) before a gesture counts as a look-drag, not a pick. */
@@ -90,6 +90,8 @@ class MeasureTool {
     private labelLayer: HTMLDivElement;
 
     private mode: MeasureMode = null;
+
+    private unit: MeasureUnit = 'auto';
 
     private points: Vec3[] = [];
 
@@ -195,6 +197,26 @@ class MeasureTool {
         this.clear();
     }
 
+    getUnitMode(): MeasureUnit {
+        return this.unit;
+    }
+
+    /**
+     * Change the display units. Existing labels are re-rendered in place, so the
+     * user never has to redraw a measurement to see it in different units.
+     *
+     * @param unit - The unit mode to display readouts in.
+     */
+    setUnitMode(unit: MeasureUnit): void {
+        if (unit === this.unit) return;
+        this.unit = unit;
+        this.rebuildLabels();
+        // place the fresh labels straight away so they don't flash at the origin
+        // for a frame before the next framerender positions them
+        this.frameUpdate();
+        this.global.app.renderNextFrame = true;
+    }
+
     clear(): void {
         this.points = [];
         this.rebuildVisuals();
@@ -277,9 +299,6 @@ class MeasureTool {
         this.layer.removeMeshInstances(this.markers.map(m => m.instance));
         this.markers = [];
 
-        for (const { el } of this.labels) el.remove();
-        this.labels = [];
-
         for (const p of this.points) {
             const node = new GraphNode();
             node.setPosition(p);
@@ -303,10 +322,21 @@ class MeasureTool {
             this.lineInstance.visible = false;
         }
 
-        if (this.mode === 'distance') this.buildDistanceLabels();
-        if (this.mode === 'area') this.buildAreaLabel();
+        this.rebuildLabels();
 
         app.renderNextFrame = true;
+    }
+
+    /**
+     * Rebuild only the on-screen labels, leaving markers and lines untouched.
+     * Used both when the sketch changes and when the display units change.
+     */
+    private rebuildLabels(): void {
+        for (const { el } of this.labels) el.remove();
+        this.labels = [];
+
+        if (this.mode === 'distance') this.buildDistanceLabels();
+        if (this.mode === 'area') this.buildAreaLabel();
     }
 
     private buildDistanceLabels(): void {
@@ -317,11 +347,11 @@ class MeasureTool {
             const len = a.distance(b);
             total += len;
             const mid = new Vec3().add2(a, b).mulScalar(0.5);
-            this.addLabel(formatLength(len), mid);
+            this.addLabel(formatLength(len, this.unit), mid);
         }
         if (this.points.length > 2) {
             this.addLabel(
-                `Σ ${formatLength(total)}`,
+                `Σ ${formatLength(total, this.unit)}`,
                 this.points[this.points.length - 1],
                 true
             );
@@ -334,7 +364,7 @@ class MeasureTool {
         const centroid = new Vec3();
         for (const p of this.points) centroid.add(p);
         centroid.divScalar(this.points.length);
-        this.addLabel(formatArea(area), centroid, true);
+        this.addLabel(formatArea(area, this.unit), centroid, true);
     }
 
     private addLabel(text: string, anchor: Vec3, emphasis = false): void {
@@ -351,45 +381,78 @@ class MeasureTool {
 /** Splat captures are metric (meters); labels display Imperial units. */
 const INCHES_PER_METER = 39.3701;
 const INCHES_PER_FOOT = 12;
-const SQ_FEET_PER_SQ_METER = (INCHES_PER_METER / INCHES_PER_FOOT) ** 2;
+const SQ_INCHES_PER_SQ_METER = INCHES_PER_METER ** 2;
+const SQ_FEET_PER_SQ_METER = SQ_INCHES_PER_SQ_METER / (INCHES_PER_FOOT ** 2);
 
 /**
- * Format a length for display: inches on their own up to a foot, feet and inches
- * beyond that (e.g. 5' 4"). A whole number of inches drops the decimal.
+ * Render inches to a tenth, dropping a trailing .0 so a whole number of inches
+ * reads as 4 rather than 4.0.
  *
- * @param meters - Length in scene units (meters).
- * @returns The formatted length.
+ * @param inches - Length in inches.
+ * @returns The number as display text.
  */
-function formatLength(meters: number): string {
-    const inches = meters * INCHES_PER_METER;
+function tenthOfInch(inches: number): string {
+    return String(Math.round(inches * 10) / 10);
+}
 
-    if (inches <= INCHES_PER_FOOT) {
-        return `${inches.toFixed(1)} in`;
-    }
-
+/**
+ * Split a length in inches into whole feet plus a remainder (e.g. 5' 4").
+ * A remainder that rounds up to a full foot carries into the feet, so the
+ * readout never shows 12".
+ *
+ * @param inches - Length in inches.
+ * @returns The formatted feet-and-inches text.
+ */
+function feetAndInches(inches: number): string {
     let feet = Math.floor(inches / INCHES_PER_FOOT);
-
-    // display to a tenth of an inch; a remainder that rounds up to a full foot
-    // carries into the feet rather than reading as 12"
     let remainder = Math.round((inches - feet * INCHES_PER_FOOT) * 10) / 10;
+
     if (remainder >= INCHES_PER_FOOT) {
         feet += 1;
         remainder = 0;
     }
 
-    // number-to-string drops a trailing .0, so a whole inch reads as 5' 4"
     return `${feet}' ${remainder}"`;
 }
 
 /**
- * Format an area for display in square feet.
+ * Format a length for display in the requested unit mode.
+ *
+ * @param meters - Length in scene units (meters).
+ * @param unit - The display unit mode.
+ * @returns The formatted length.
+ */
+function formatLength(meters: number, unit: MeasureUnit): string {
+    const inches = meters * INCHES_PER_METER;
+
+    if (unit === 'inches') {
+        return `${tenthOfInch(inches)}"`;
+    }
+
+    if (unit === 'feetInches') {
+        return feetAndInches(inches);
+    }
+
+    // auto: inches up to a foot, feet and inches beyond
+    return inches <= INCHES_PER_FOOT ?
+        `${inches.toFixed(1)} in` :
+        feetAndInches(inches);
+}
+
+/**
+ * Format an area for display. Foot-based modes read in square feet; forcing
+ * inches switches the area readout to square inches so the two stay in step.
  *
  * @param squareMeters - Area in square scene units.
+ * @param unit - The display unit mode.
  * @returns The formatted area.
  */
-function formatArea(squareMeters: number): string {
-    const squareFeet = squareMeters * SQ_FEET_PER_SQ_METER;
-    return `${squareFeet.toFixed(1)} sq ft`;
+function formatArea(squareMeters: number, unit: MeasureUnit): string {
+    if (unit === 'inches') {
+        return `${(squareMeters * SQ_INCHES_PER_SQ_METER).toFixed(0)} sq in`;
+    }
+
+    return `${(squareMeters * SQ_FEET_PER_SQ_METER).toFixed(1)} sq ft`;
 }
 
 /**

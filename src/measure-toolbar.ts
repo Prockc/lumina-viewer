@@ -1,9 +1,27 @@
-import type { MeasureMode } from './types';
+import type { MeasureMode, MeasureUnit } from './types';
 
 interface MeasureToolbarCallbacks {
     onMeasureMode: (mode: MeasureMode) => void;
     onClearMeasurements: () => void;
+    onUnitMode: (unit: MeasureUnit) => void;
 }
+
+/** Order the unit switcher cycles through. */
+const UNIT_CYCLE: MeasureUnit[] = ['auto', 'inches', 'feetInches'];
+
+/** Short badge rendered on the switcher, showing the mode currently in force. */
+const UNIT_BADGE: Record<MeasureUnit, string> = {
+    auto: 'AUTO',
+    inches: 'IN',
+    feetInches: 'FT/IN'
+};
+
+/** Long form used for the tooltip and the confirmation toast. */
+const UNIT_LABEL: Record<MeasureUnit, string> = {
+    auto: 'auto (inches under a foot)',
+    inches: 'inches',
+    feetInches: 'feet & inches'
+};
 
 interface MeasureToolbarHandle {
     /** Enable/disable the clear button based on sketch content. */
@@ -62,9 +80,16 @@ const installMeasureToolbar = (callbacks: MeasureToolbarCallbacks): MeasureToolb
 
     const distanceBtn = button('distance', 'Measure distance');
     const areaBtn = button('area', 'Measure area');
+
+    // Unit switcher: a text badge rather than an icon, since the current mode is
+    // the information the user needs at a glance
+    const unitBtn = document.createElement('button');
+    unitBtn.type = 'button';
+    unitBtn.className = 'lumina-toolbar__btn lumina-toolbar__unit';
+
     const clearBtn = button('clear', 'Clear measurements');
     clearBtn.disabled = true;
-    items.append(distanceBtn, areaBtn, clearBtn);
+    items.append(distanceBtn, areaBtn, unitBtn, clearBtn);
 
     measureGroup.append(toggleBtn, items);
     root.append(measureGroup);
@@ -111,6 +136,26 @@ const installMeasureToolbar = (callbacks: MeasureToolbarCallbacks): MeasureToolb
             showToast('Tap 3+ points to outline an area');
         }
     };
+
+    let unit: MeasureUnit = UNIT_CYCLE[0];
+
+    const applyUnit = (): void => {
+        unitBtn.textContent = UNIT_BADGE[unit];
+        unitBtn.title = `Units: ${UNIT_LABEL[unit]}`;
+        unitBtn.setAttribute('aria-label', `Measurement units: ${UNIT_LABEL[unit]}`);
+        // lit while an explicit override is in force; auto is the resting state
+        unitBtn.classList.toggle('active', unit !== 'auto');
+    };
+
+    applyUnit();
+
+    unitBtn.addEventListener('click', () => {
+        unit = UNIT_CYCLE[(UNIT_CYCLE.indexOf(unit) + 1) % UNIT_CYCLE.length];
+        applyUnit();
+        callbacks.onUnitMode(unit);
+        showToast(`Units: ${UNIT_LABEL[unit]}`);
+        // stay expanded so the user can keep cycling and watch the labels update
+    });
 
     distanceBtn.addEventListener('click', () => setMeasureMode('distance'));
     areaBtn.addEventListener('click', () => setMeasureMode('area'));

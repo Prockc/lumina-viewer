@@ -902,6 +902,28 @@ button {
     pointer-events: none;
 }
 
+/* Unit switcher: carries a text badge instead of an SVG, so it needs its own
+   type scale. Sits flush (no icon padding) to fit "FT/IN" inside the circle. */
+.lumina-toolbar__btn.lumina-toolbar__unit {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+}
+
+/* Active unit override highlights in the brand pink */
+.lumina-toolbar__btn.lumina-toolbar__unit.active {
+    background: $clr-accent;
+    color: $clr-text-light;
+    box-shadow: 0 0 14px var(--lumina-brand-soft);
+}
+
 /* Primary ruler toggle: brand pink with a white icon so it reads as the
    entry point to the measurement tools */
 .lumina-toolbar__btn.lumina-toolbar__toggle {
